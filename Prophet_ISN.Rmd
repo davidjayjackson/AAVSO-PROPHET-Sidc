@@ -6,7 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,
+                   fig.width=9, fig.height=6)
 library(tidyverse)
 library(data.table)
 library(prophet)
@@ -30,7 +31,8 @@ summary(sidc1)
 ```
 
 ## Sunspot Activity and Predictions: Jan 1, 1850 - July 31, 2030
-```{r}
+
+```{r Prophet}
 df <-sidc1 
 m <- prophet(seasonality.mode="multiplicative")
 m <- add_seasonality(m, name="cycle_11year", period=365.25 * 11,fourier.order=5)
@@ -55,9 +57,7 @@ ggtitle("SIDC Current Min.: Jan 1, 2014 - Feb. 29,2020") +ylab("Means  Wolf(R)")
 a <- sidc[Ymd >="2008-12-01",]
 a$ma <-ma(a$Spots,order=365)
 ggplot(data=a,aes(x=Ymd,y=Spots)) + geom_line() + geom_smooth(method="loess") + 
-geom_line(data=a,aes(x=Ymd,y=ma,col="MA"))
+geom_line(data=a,aes(x=Ymd,y=ma,col="Moving Average"))
 ```
-```{r}
 
-```
 
