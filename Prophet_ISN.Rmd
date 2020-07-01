@@ -1,7 +1,7 @@
 ---
 title: "SDIC Sunspot/ISN Prediction"
 author: "David J Jackson"
-date: "5/4/2020"
+date: "July 1, 2020 22:30 UT/UD"
 output: html_document
 ---
 
@@ -23,10 +23,10 @@ The first thing we need to understand is that the (raw) data used to predict (in
 1G 10 + 20S = 30 Wolf 2G 10 + 10S = 30 Wolf
 
 ```{r}
-sidc <-fread("../db/SN_d_tot_V2.0.csv",sep=";")
+sidc <-fread("../db/SN_d_tot_V2.0.csv")
 colnames(sidc) <- c("Year","Month","Day", "Fdate","Spots", "Sd","Obs" ,"Defin"  )
 sidc$Ymd <- as.Date(paste(sidc$Year, sidc$Month, sidc$Day, sep = "-"))
-sidc1<- sidc %>% filter(Ymd>="1850-01-01",Ymd <="2020-04-30") %>% select(Ymd,Spots)
+sidc1<- sidc %>% filter(Ymd>="1850-01-01") %>% select(Ymd,Spots)
 colnames(sidc1) <- c("ds","y")
 summary(sidc1)
 ```
@@ -36,10 +36,12 @@ summary(sidc1)
 ```{r Prophet}
 df <-sidc1 
 m <- prophet(seasonality.mode="multiplicative")
-m <- add_seasonality(m, name="cycle_11year", period=365.25 * 11,fourier.order=5)
+m <- add_seasonality(m, name="cycle_11year", period=365.25 * 11,fourier.order=5,mode="multiplicative")
 m <- fit.prophet(m, df)
-future <- make_future_dataframe(m,periods=4000,freq="day")
+future <- make_future_dataframe(m,periods=8000,freq="day")
 forecast <- predict(m, future)
+```
+```{r}
 plot(m, forecast) +ggtitle("SIDC Sunspot Prediction: Jan. 1850 - Oct. 2019") +ylab("Predicted Mean Wolf(Ra)") +xlab("Years" )
 ```
 ```{r}
@@ -66,21 +68,24 @@ geom_line(data=a,aes(x=Ymd,y=ma,col="Moving Average"))
 ```{r Calc Yearly ISN}
 isn_yearly <- sidc1 %>% group_by(Yearly = floor_date(ds,"year")) %>%
           summarise(mean_isn = mean(y))
- 
+isn_monthly <- sidc1 %>% group_by(Monthly = floor_date(ds,"month")) %>%
+          summarise(mean_isn = mean(y)) 
 ```
 ```{r Plot Yearly Mean}
-isn_yearly %>% ggplot(aes(x=Yearly,y=mean_isn)) + geom_line() + geom_smooth() +
+isn_monthly %>% ggplot(aes(x=Monthly,y=mean_isn)) + geom_line() + geom_smooth() +
                         labs(title="Year Mean ISN",x="Year",y="Yearly Mean ISN")
 ```
 ```{r Prophet Prediction}
-colnames(isn_yearly) <- c("ds","y")
-df <- isn_yearly
+colnames(isn_monthly) <- c("ds","y")
+df <- isn_monthly
 
 m <- prophet(seasonality.mode="multiplicative")
-m <- add_seasonality(m, name="cycle_11year", period=11,fourier.order=5)
+m <- add_seasonality(m, name="cycle_11year", period=11*12,fourier.order=5)
 m <- fit.prophet(m, df)
-future <- make_future_dataframe(m,periods=50,freq="year")
+future <- make_future_dataframe(m,periods=500,freq="month")
 forecast <- predict(m, future)
+```
+```{r}
 plot(m, forecast) +ggtitle("SIDC Yearly ISN: Jan. 1850 - Apr. 2020") +ylab("Predicted Mean Wolf(Ra)") +xlab("Years" )
 ```
 ```{r}
