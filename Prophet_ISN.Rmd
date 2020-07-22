@@ -1,7 +1,7 @@
 ---
 title: "SDIC Sunspot/ISN Prediction"
 author: "David J Jackson"
-date: "July 1, 2020 22:30 UT/UD"
+date: "July 22, 2020 UT"
 output: html_document
 ---
 
@@ -23,7 +23,7 @@ The first thing we need to understand is that the (raw) data used to predict (in
 1G 10 + 20S = 30 Wolf 2G 10 + 10S = 30 Wolf
 
 ```{r}
-sidc <-fread("../db/SN_d_tot_V2.0.csv")
+sidc <-fread("../db/SN_d_tot_V2.0.csv",sep=";")
 colnames(sidc) <- c("Year","Month","Day", "Fdate","Spots", "Sd","Obs" ,"Defin"  )
 sidc$Ymd <- as.Date(paste(sidc$Year, sidc$Month, sidc$Day, sep = "-"))
 sidc1<- sidc %>% filter(Ymd>="1850-01-01") %>% select(Ymd,Spots)
