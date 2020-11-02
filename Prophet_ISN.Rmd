@@ -1,7 +1,7 @@
 ---
 title: "SDIC Sunspot/ISN Prediction"
 author: "David J Jackson"
-date: "August 1, 2020 UT"
+date: "Oct. 2, 2020 UT"
 output: html_document
 ---
 
@@ -23,12 +23,13 @@ The first thing we need to understand is that the (raw) data used to predict (in
 1G 10 + 20S = 30 Wolf 2G 10 + 10S = 30 Wolf
 
 ```{r}
-sidc <-fread("../DATA//SN_d_tot_V2.0.csv")
+sidc <-fread("./SN_d_tot_V2.0.csv")
 colnames(sidc) <- c("Year","Month","Day", "Fdate","Spots", "Sd","Obs" ,"Defin"  )
 sidc$Ymd <- as.Date(paste(sidc$Year, sidc$Month, sidc$Day, sep = "-"))
 sidc1<- sidc %>% filter(Ymd>="1850-01-01") %>% select(Ymd,Spots)
 colnames(sidc1) <- c("ds","y")
 summary(sidc1)
+write.csv(sidc,file="sidc.csv",row.names = FALSE)
 ```
 
 ## Sunspot Activity and Predictions: Jan 1, 1850 - July 31, 2030
@@ -42,7 +43,7 @@ future <- make_future_dataframe(m,periods=8000,freq="day")
 forecast <- predict(m, future)
 ```
 ```{r}
-plot(m, forecast) +ggtitle("SIDC Sunspot Prediction: Jan. 1850 - Oct. 2019") +ylab("Predicted Mean Wolf(Ra)") +xlab("Years" )
+plot(m, forecast) +ggtitle("SIDC Sunspot Prediction: Jan. 1850 - Present") +ylab("Predicted Mean Wolf(Ra)") +xlab("Years" )
 ```
 ```{r}
 df.pred <- forecast %>% select(ds,yhat,yhat_lower,yhat_upper) 
@@ -95,6 +96,6 @@ forecast$ds <-as.Date(forecast$ds)
 data <- df.pred %>% filter(ds >="1999-01-01")
 
 ggplot(data=data,aes(x=ds,y=yhat)) +geom_line() +geom_smooth(method="loess")  + 
-ggtitle("SIDC Current Min.: Jan 1, 2014 - Feb. May 4, 2020") +ylab(" Yearly Means  Wolf(R)")
+ggtitle("SIDC Current Min.: Jan 1, 2014 - Feb. Oct 31, 2020") +ylab(" Yearly Means  Wolf(R)")
 ```
 
