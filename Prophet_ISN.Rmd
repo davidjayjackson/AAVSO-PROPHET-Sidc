@@ -1,7 +1,7 @@
 ---
 title: "SDIC Sunspot/ISN Prediction"
 author: "David J Jackson"
-date: "Oct. 2, 2020 UT"
+date: "Jan. 2, 2021 9:30PM EST"
 output: html_document
 ---
 
@@ -20,7 +20,7 @@ library(ggeasy)
 
 The first thing we need to understand is that the (raw) data used to predict (in the plot below) the values of "y" are not sunspots or even mean sunspots but are daily mean Wolf(Rn) value. The Wolf(mean daily) values are calculate using the formula, Wolf = Groups *10 +Spots. Two examples:
 
-1G 10 + 20S = 30 Wolf 2G 10 + 10S = 30 Wolf
+* 1G 10 + 20S = 30 Wolf 2G 10 + 10S = 30 Wolf
 
 ```{r}
 sidc <-fread("./SN_d_tot_V2.0.csv")
