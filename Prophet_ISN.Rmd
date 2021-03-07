@@ -1,7 +1,7 @@
 ---
 title: "SDIC Sunspot/ISN Prediction"
 author: "David J Jackson"
-date: "Jan. 2, 2021 9:30PM EST"
+date: "March 7, 2021 12:00 PM EST"
 output: html_document
 ---
 
@@ -76,26 +76,5 @@ isn_monthly <- sidc1 %>% group_by(Monthly = floor_date(ds,"month")) %>%
 isn_monthly %>% ggplot(aes(x=Monthly,y=mean_isn)) + geom_line() + geom_smooth() +
                         labs(title="Year Mean ISN",x="Year",y="Yearly Mean ISN")
 ```
-```{r Prophet Prediction}
-colnames(isn_monthly) <- c("ds","y")
-df <- isn_monthly
 
-m <- prophet(seasonality.mode="multiplicative")
-m <- add_seasonality(m, name="cycle_11year", period=11*12,fourier.order=5)
-m <- fit.prophet(m, df)
-future <- make_future_dataframe(m,periods=500,freq="month")
-forecast <- predict(m, future)
-```
-```{r}
-plot(m, forecast) +ggtitle("SIDC Yearly ISN: Jan. 1850 - Apr. 2020") +ylab("Predicted Mean Wolf(Ra)") +xlab("Years" )
-```
-```{r}
-df.pred <- forecast %>% select(ds,yhat,yhat_lower,yhat_upper) 
-forecast <-as.data.table(forecast)
-forecast$ds <-as.Date(forecast$ds)
-data <- df.pred %>% filter(ds >="1999-01-01")
-
-ggplot(data=data,aes(x=ds,y=yhat)) +geom_line() +geom_smooth(method="loess")  + 
-ggtitle("SIDC Current Min.: Jan 1, 2014 - Feb. Oct 31, 2020") +ylab(" Yearly Means  Wolf(R)")
-```
 
