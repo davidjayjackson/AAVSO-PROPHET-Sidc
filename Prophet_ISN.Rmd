@@ -23,9 +23,12 @@ The first thing we need to understand is that the (raw) data used to predict (in
 * 1G 10 + 20S = 30 Wolf 2G 10 + 10S = 30 Wolf
 
 ```{r}
+rm(list=ls())
 sidc <-fread("./SN_d_tot_V2.0.csv")
 colnames(sidc) <- c("Year","Month","Day", "Fdate","Spots", "Sd","Obs" ,"Defin"  )
 sidc$Ymd <- as.Date(paste(sidc$Year, sidc$Month, sidc$Day, sep = "-"))
+```
+```{r}
 sidc1<- sidc %>% filter(Ymd>="1850-01-01") %>% select(Ymd,Spots)
 colnames(sidc1) <- c("ds","y")
 summary(sidc1)
@@ -77,4 +80,42 @@ isn_monthly %>% ggplot(aes(x=Monthly,y=mean_isn)) + geom_line() + geom_smooth() 
                         labs(title="Year Mean ISN",x="Year",y="Yearly Mean ISN")
 ```
 
+### Prophet for 60 and 100 Years: 1921 vs 1961
 
+
+```{r Prophet}
+df <- sidc1 %>% filter(ds >="1961-01-01") 
+m <- prophet(seasonality.mode="multiplicative")
+m <- add_seasonality(m, name="cycle_11year", period=365.25 * 11,fourier.order=5,mode="multiplicative")
+m <- fit.prophet(m, df)
+future <- make_future_dataframe(m,periods=8000,freq="day")
+forecast <- predict(m, future)
+
+plot(m, forecast) +ggtitle("SIDC Sunspot Prediction: Jan. 1961 - Present") +ylab("Predicted Mean Wolf(Ra)") +xlab("Years" )
+```
+
+
+```{r Prophet}
+df1 <- sidc1 %>% filter(ds >="1921-01-01") 
+m1 <- prophet(seasonality.mode="multiplicative")
+m1 <- add_seasonality(m1, name="cycle_11year", period=365.25 * 11,fourier.order=5,mode="multiplicative")
+m1 <- fit.prophet(m1, df1)
+future1 <- make_future_dataframe(m1,periods=8000,freq="day")
+forecast1 <- predict(m1, future1)
+
+plot(m1, forecast1) +ggtitle("SIDC Sunspot Prediction: Jan. 1921 - Present") +ylab("Predicted Mean Wolf(Ra)") +xlab("Years" )
+```
+
+### Compare predictions for 60 vs 100 Years
+
+```{r}
+ggplot(forecast) + geom_line(aes(x=ds,y=trend,col="60 Years"),lwd=1.5) +
+  geom_line(data=forecast1,aes(x=ds,y=trend,col="100 Years"),lwd=1.5) +
+  labs(title = "Comparing 60/100 YeAR ISN Trend 1921/1961")
+```
+
+```{r}
+ggplot(forecast) + geom_line(aes(x=ds,y=yhat,col="60 Years"),lwd=1.5) +
+  geom_line(data=forecast1,aes(x=ds,y=yhat,col="100 Years"),lwd=1.5) +
+  labs(title = "Comparing 60/100 YeaR Yhat 1921/1961")
+```
