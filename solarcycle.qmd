@@ -1,0 +1,97 @@
+---
+title: Solar Cycle Analysis
+author: Me
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(tidyverse)
+library(scales)
+library(pracma)
+library(plotly)
+library(fable)
+library(tsibble)
+library(tsibbledata)
+library(lubridate)
+# Read Excel File
+df <- readxl::read_xlsx('./SN_d_tot_V2.xlsx',sheet ="isn") |> select(date,R) |> filter(date >='2018-01-01')
+df$date <- as.Date(df$date)
+summary(df$R)
+```
+#### EDA 
+
+```{r}
+R <- ggplot(df) + geom_line(aes(x=date,y=R)) +
+labs(title = "Wolf Sunspot Numbers")
+ggplotly(R)
+```
+```{r}
+ggplot(df) + geom_boxplot(aes(x=R)) +
+labs(title = "Wolf Sunspot Numbers")
+```
+```{r}
+ggplot(df) + geom_histogram(aes(x=R)) +
+labs(title = "Wolf Sunspot Numbers")
+```
+#### Calculate and Analyze Moving Averages (14 and 28 days)
+
+```{r}
+
+df$ma14d <- movavg(df$R,100,type='w')
+df$ma28d <- movavg(df$R,200,type='w')
+tail(df)
+```
+```{r}
+
+rolling <- ggplot(df) + geom_line(aes(x=date,y=ma14d,col="100 Days")) +
+geom_line(aes(x=date,y=ma28d,col="200 Days")) +
+labs(title ="ISN Rolling Means Comparison: 2020 - 2023")
+ggplotly(rolling)
+```
+#### Cumulative Total
+
+```{r}
+df$cumsum <- cumsum(df$R)
+summary(df$cumsum)
+```
+```{r}
+cumplot <- ggplot(df) + geom_line(aes(x=date,y=cumsum)) +
+labs(title ="Cumulative Total ISN/Wolf Sunspot Numbers")
+ggplotly(cumplot)
+```
+#### Predict Cumulative Total Rn (ISN)
+
+```{r}
+
+  df_tsibble <- df %>%
+  mutate(date = as.Date(date)) %>%
+  as_tsibble(index = date)
+
+  df_tsibble <- df_tsibble %>%
+  mutate(cumsum_R = cumsum(R))
+
+```
+```{r}
+  fitted_models <- df_tsibble %>%
+  model(
+    ets = ETS(box_cox(cumsum_R, 0.3)),
+    # arima = ARIMA(log(cumsum_R)),
+    snaive = SNAIVE(cumsum_R)
+  )
+```
+
+```{r}
+  forecasts <- fitted_models %>%
+  forecast(h = "60 days")
+```
+```{r}
+tail(forecast,20)
+histdata <- df_tsibble |> filter(date >='2022-01-01')
+autoplot(forecasts) +
+  geom_line(data = histdata, aes(x = date, y = cumsum_R), color = "blue") +
+  labs(title = "60-Day Forecast with Historical Data", x = "Date", y = "Cumulative Total(Rn/ISN)") +
+  theme_minimal()
+
+```
